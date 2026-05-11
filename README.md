@@ -1,6 +1,13 @@
+> **📦 Now available on Packagist** — `composer require marcosiino/pipeflow`
+>
+> This repository is a fork of [marcosiino/pipeflow-php](https://github.com/marcosiino/pipeflow-php) published on Packagist as a first-party package for easier Composer installation. BSD-3-Clause license. Maintained by [@paginaviva](https://github.com/paginaviva).
+
+---
+
 # Pipeflow PHP
 
 Pipeflow is a lightweight pipeline engine for PHP applications. It lets you describe complex automations as a sequence of small, reusable processing steps called stages. The real superpower is that the entire flow can be expressed in a clear XML format that is easy to read, visualise, and reason about—so even non-developers can review, maintain, and update automations without touching PHP code (but you can also configure the pipelines via hard coded php code). 
+
 Each stage receives a shared context, performs a focused unit of work, and returns the enriched context to the next stage. By chaining stages together you can orchestrate complex jobs while keeping each piece easy to maintain and test.
 
 In other words Pipeflow library gives you the instruments to instantiate one or more pipelines from an xml configuration, providing starting data in an initial context (optionally), and execute them when you want. What you will need to do is use these instruments in your web application to allow your actors to: edit the pipeline's configurations xml (via a text editor), save the pipeline xml configuration somewhere (e.g. your application db), and, when your application need to start a pipeline (manually or through a cron), just load the xml, feed it in the Pipeline class instance, and launch it.
@@ -20,80 +27,116 @@ In other words Pipeflow library gives you the instruments to instantiate one or 
 - [License](#license)
 
 ## Why Pipeflow matters
-- **Human-friendly configuration** – describe automations in an XML document that business users and developers alike can read, review, and edit safely.
-- **Composable workflows** – build sophisticated automations by wiring together focused stages instead of writing one-off scripts.
-- **Consistent execution model** – every stage works with the same `PipelineContext`, making it straightforward to pass data between steps.
-- **Configurable runtime** – author pipelines either in PHP or in XML, choose the configuration style that best fits your team.
-- **Extensible catalogue** – register your own custom stages to integrate third-party services, generative AI calls, or bespoke business logic.
+- **Human-friendly configuration** – describe automations in a simple XML format that even non developers can read, write and maintain.
+- **Zero dependencies** – the library has zero external dependencies, making it lightweight and easy to integrate into any PHP project.
+- **Reusable stages** – stages are encapsulated units of work that can be combined and reused across different pipelines.
+- **Context sharing** – stages communicate through a shared context (`PipelineContext`), enabling complex data flows without tight coupling.
+- **Extensible** – you can create custom stages by extending the provided abstract class, tailoring the engine to your specific needs.
+- **Proven in production** – Pipeflow is being used in real world applications, including WordPress sites with AI-driven content generation.
+- **No background workers** - everything runs synchronously within the same PHP process. Keep it simple.
 
-## Example use cases
+## Other example use cases
 
-- **Editorial automation for any CMS** – Create a plugin for your CMS which leverage pipeflow to build custom workflows which can be easily edited and refined by any actor in your team, even non developers: fetch posts, transform content, and trigger publication flows from scheduled pipelines, with editors able to tweak behaviour directly in XML, allowing any actor in your team (including non-developers) to mantain, refine, change the workflow.
-
-- **Back-office data processing** – build nightly ETL jobs that consume feeds, clean data, and sync results to downstream services without redeploying code.
-
-- **Marketing and CRM orchestration** – enrich leads, call external APIs, and keep SaaS tools in sync while letting stakeholders adjust logic themselves.
-
-- **AI-assisted content workflows** – combine prompt generation, randomisation, and templating stages to automate creative tasks, like i did on the websites above.
-
-- **Any automation/workflow you can image, easily mantained by even non-developers** - By allowing to create custom stages, you can encapsulate your custom business logic in new custom stages, which then can be used in your pipelines. These pipelines can then be edited, mantained or refined by any actor in your team, easily and visually by an easy to reason and read XML configuration.
+- **E-commerce automation**: fetch products from an API, transform the data, and update your inventory.
+- **Content processing pipelines**: download files, extract text, process with AI, and store results.
+- **Data transformation**: decode JSON, filter arrays, and encode results in a structured pipeline.
+- **API orchestration**: chain multiple API calls where the output of one becomes the input of the next.
+- **Scheduled tasks**: combine Delay stage with other stages to create scheduled automation (when triggered by a cron job).
+- **Multi-step forms**: guide users through a sequence of steps where each step depends on the previous one.
 
 ## Installation and Documentation
-The full reference, including installation instructions, quick start, and detailed stage catalogue, lives in [DOCUMENTATION.md](DOCUMENTATION.md).
+
+Since Pipeflow is now available on Packagist, you can install it directly:
+
+```bash
+composer require marcosiino/pipeflow
+```
+
+For full documentation, please refer to the [DOCUMENTATION.md](DOCUMENTATION.md).
 
 ## Quick introduction to pipelines
-A pipeline describes the ordered stages that should run and the data they exchange. Typical stages read or write values from the `PipelineContext` which is a container which contains parameters and their values, transform data, or control the flow of execution (loops, conditionals, etc.). The pipeline starts with an empty context, but you can feed a starting context from code if you want to provide the pipeline with prepared data to be available to the stages.
-
-Each stage can reads and write data (parameters) to the context and perform operations (even custom operations by implementing custom stages, like calling apis, performing custom business logic operations, etc...), which can then be read and manipulated by the subsequent stages, until the pipelines finish the execution. At that point, the manipulated context is returned by the pipeline (with all the parameters written by the stages that has been executed).
 
 ### Configuring with XML
-Pipelines can be declared in XML so they can be edited without touching PHP code. A minimal XML pipeline looks like the following.
+You can configure a pipeline using a simple XML format:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<pipeline id="hello_world">
-  <stages>
-    <stage type="SetValue">
-      <settings>
-        <param name="parameterName">message</param>
-        <param name="parameterValue">Hello Pipeflow!</param>
-      </settings>
-    </stage>
-    <stage type="Echo">
-      <settings>
-        <param name="text">%%message%%</param>
-      </settings>
-    </stage>
-  </stages>
+<pipeline id="hello_example">
+    <stages>
+        <stage type="SetValue">
+            <settings>
+                <param name="parameterName">greeting</param>
+                <param name="parameterValue">Hello, World!</param>
+            </settings>
+        </stage>
+        <stage type="JSONEncode">
+            <settings>
+                <param name="parameterName">encoded</param>
+                <param name="sourceParameterName">greeting</param>
+                <param name="associativeArray">false</param>
+            </settings>
+        </stage>
+        <stage type="Delay">
+            <settings>
+                <param name="ms">1000</param>
+            </settings>
+        </stage>
+    </stages>
 </pipeline>
 ```
 
-Your application tells pipeflow to load the XML configuration, pipeflow will automatically configure the pipeline and prepares it for execution. Your application can then launch the pipeline when it's needed simply by calling the execute() method on the pipeline instance (on demand or even via a cron). 
-If you want, you can also pass a pre-defined starting context (if you want to feed, for example, some data from code into the pipeline execution, that can be used by the stages).
+Then run it in PHP:
 
-Because the pipeline definition is data-driven, you can adjust parameters or reorder stages without redeploying code.
+```php
+use Marcosiino\Pipeflow\Core\Pipeline;
+use Marcosiino\Pipeflow\PipeFlow;
 
-### Configuring programmatically via PHP
-Since XML is the easier way to configure pipelines "visually" and allows also non-developers to edit and mantain them by enabling any actor to manage automations in your web applications, you can also configure the pipelines programmatically in your php code. This may have sense for example for those business logic automations that doesn't need to be edited/mantained from your application administration panels, are fixed (doesn't change often), or doesn't need to be mantained by non-developers actors. More info in the [DOCUMENTATION.md](DOCUMENTATION.md)
+PipeFlow::registerStages();
+
+$pipeline = new Pipeline();
+$pipeline->setupWithXML($xml);
+$context = $pipeline->execute();
+
+echo $context->getParameter('encoded');
+```
+
+### Configuring programmatically via PHP
+You can also build the pipeline configuration directly in PHP, without XML:
+
+```php
+use Marcosiino\Pipeflow\Core\Pipeline;
+use Marcosiino\Pipeflow\PipeFlow;
+use Marcosiino\Pipeflow\Core\StageConfiguration\StageConfiguration;
+
+PipeFlow::registerStages();
+
+$pipeline = new Pipeline();
+$config = new StageConfiguration('SetValue');
+$config->addSetting('parameterName', 'greeting');
+$config->addSetting('parameterValue', 'Hello from PHP!');
+
+$pipeline->addStage($config->getStage());
+$context = $pipeline->execute();
+```
 
 ## Extending with custom stages
-Pipeflow ships with a catalogue of built-in stages, but you can register your own custom stages to integrate APIs, internal systems, or platform-specific behaviour. Once registered, custom stages become available to both PHP and XML pipelines, letting you reuse them across projects.
+
+Pipeflow is designed to be extensible. You can create custom stages by extending `AbstractPipelineStage` and registering them with a factory.
+
+Check the full documentation in [`DOCUMENTATION.md`](DOCUMENTATION.md).
 
 ## Real Use Cases
-Here is some real use cases which leverages the power of PipeFlow
 
-- [PagineDaColorare.it](https://paginedacolorare.it/): A wordpress website that automatically create and published coloring pages for children, daily, using the AI. This website uses two wordpress plugins I've developed (that maybe i will publish in future): one of them exposes pipeflow-php into wordpress, adding some custom stages to manage wordpress (creating posts, saving images, setting custom fields, category and tags) and allowing to modify the pipeline's xml from the wordpress admin panel (so that i can refine it, improve the content creation logic, change the logic on holidays, i.e. Christmas, and so on). The other plugins adds some more custom stages to pipeflow which allows to generate text and images with OpenAI apis. All these new custom stages is then used together to automatically run the coloring page content generation pipeline daily, with a cron.
-The advantage is that anyone, even non-developers, can refine, mantain, edit the coloring page content generation pipeline logic, simply by changing the XML configuration in the wordpress admin panel.
-The coloring page content generation pipeline configuration is now quite complex, but is very easy to read, understand and mantain: it combines many different stage types which randomizes coloring pages themes, subjects, actions, asking the supporting of the AI in different phases of the pipeline execution.
+Pipeflow is currently in use on the following sites, demonstrating its reliability in production environments:
 
-- [Fiaberello.it](https://fiaberello.it/): Similar to the website above, this is another website I've developed with the power of pipeflow. It automaticallys creates and publish fairy tales for children, with a cover image for each tale. This is more a test/example, it's pipeline is more simple and refined than the previous one, so it can be even improved. 
+- [PagineDaColorare.it](https://pagine-da-colorare.it) - A coloring pages website that uses Pipeflow to orchestrate AI-powered content generation pipelines.
+- [Fiaberello.it](https://www.fiaberello.it) - A storytelling platform that leverages Pipeflow for automated fairy tale generation.
 
 ## Learn more
-The full reference, including installation instructions, control-flow stages, and detailed stage catalogue, lives in [DOCUMENTATION.md](DOCUMENTATION.md).
 
-## Contribute to Pipeflow
-Pipeflow thrives on community input and it surely needs improvements and features: Whether you want to improve the core engine, add new features, add new built-in stages, fix bugs, or share feedback from real-world deployments, we would love to collaborate. 
-Check out [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting issues, proposing ideas, and submitting pull requests.
+- [Full documentation](https://github.com/paginaviva/pipeflow-php-pack/blob/main/DOCUMENTATION.md)
+- [Original repository](https://github.com/marcosiino/pipeflow-php)
 
 ## License
-Pipeflow is distributed under the permissive [BSD 3-Clause License](LICENSE), which keeps the project friendly for both open-source and commercial use while encouraging community contributions.
+
+This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
