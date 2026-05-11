@@ -1,6 +1,18 @@
 > **📦 Now available on Packagist** — `composer require marcosiino/pipeflow`
 >
+> **PHP:** `^8.1 | ^8.2 | ^8.3 | ^8.4` — **Zero dependencies** — **BSD-3-Clause**
+>
 > This repository is a fork of [marcosiino/pipeflow-php](https://github.com/marcosiino/pipeflow-php) published on Packagist as a first-party package for easier Composer installation. BSD-3-Clause license. Maintained by [@paginaviva](https://github.com/paginaviva).
+
+---
+
+## Requirements
+
+- **PHP 8.1 or higher** (8.1, 8.2, 8.3, 8.4 — verified)
+- No external PHP extensions required
+- Zero external dependencies
+
+Pipeflow has been tested on PHP 8.1 through 8.4. It does not require any external PHP extensions or libraries.
 
 ---
 
@@ -14,6 +26,7 @@ In other words Pipeflow library gives you the instruments to instantiate one or 
 
 ## Table of Contents
 
+- [Requirements](#requirements)
 - [Why Pipeflow matters](#why-pipeflow-matters)
 - [Example use cases](#other-example-use-cases)
 - [Installation and Documentation](#installation-and-documentation)
@@ -51,6 +64,8 @@ Since Pipeflow is now available on Packagist, you can install it directly:
 ```bash
 composer require marcosiino/pipeflow
 ```
+
+> **Note:** This package requires PHP 8.1 or higher (tested on PHP 8.1 through 8.4).
 
 For full documentation, please refer to the [DOCUMENTATION.md](DOCUMENTATION.md).
 
